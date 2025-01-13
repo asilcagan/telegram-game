@@ -193,10 +193,10 @@
         class Enemy {
             constructor(level) {
                 this.level = level;
-                this.hp = 50 + (level * 10);
-                this.maxHp = this.hp;
-                this.damage = 5 + (level * 2);
-                this.expReward = 20 + (level * 5);
+                this.maxHp = 50 + (level * 20);  // Her level için 20 HP bonus
+                this.hp = this.maxHp;
+                this.damage = 5 + (level * 2);   // Her level için 2 hasar bonus
+                this.expReward = 20 + (level * 5); // Base 20 EXP + level başına 5 EXP
             }
         }
 
@@ -228,31 +228,47 @@
         function startCombat() {
             gameState.currentEnemy = new Enemy(gameState.player.level);
             gameState.isInCombat = true;
-            tg.showAlert(`Seviye ${gameState.currentEnemy.level} düşmanla karşılaştınız!\nDüşman HP: ${gameState.currentEnemy.hp}\nKazanılacak EXP: ${gameState.currentEnemy.expReward}`);
+            updateCombatUI();
+            tg.showAlert(`⚔️ Yeni Düşman!\nSeviye: ${gameState.currentEnemy.level}\nHP: ${gameState.currentEnemy.hp}/${gameState.currentEnemy.maxHp}\nVerdiği Hasar: ${gameState.currentEnemy.damage}\nKazanılacak EXP: ${gameState.currentEnemy.expReward}`);
         }
 
         function attack() {
-            if (!gameState.currentEnemy) return;
+            if (!gameState.isInCombat || !gameState.currentEnemy) {
+                startCombat();
+                return;
+            }
 
             // Oyuncu saldırısı
             const playerDamage = 10 + Math.floor(Math.random() * 5) + (gameState.player.level * 2);
             gameState.currentEnemy.hp -= playerDamage;
-            tg.showAlert(`⚔️ Düşmana ${playerDamage} hasar verdiniz!\nDüşman HP: ${gameState.currentEnemy.hp}`);
 
+            let message = `⚔️ Savaş Durumu:\n`;
+            message += `Düşmana ${playerDamage} hasar verdiniz!\n`;
+            message += `Düşmanın HP: ${Math.max(0, gameState.currentEnemy.hp)}/${gameState.currentEnemy.maxHp}\n`;
+            
             // Düşman ölürse
             if (gameState.currentEnemy.hp <= 0) {
                 const expGained = gameState.currentEnemy.expReward;
-                tg.showAlert(`🎯 Düşmanı yendiniz!\n💫 ${expGained} EXP kazandınız!\nMevcut EXP: ${gameState.player.exp + expGained}/${gameState.player.expToNextLevel}`);
+                message += `\n🎯 Düşmanı YENDİNİZ!\n`;
+                message += `💫 ${expGained} EXP kazandınız!\n`;
+                message += `Toplam EXP: ${gameState.player.exp + expGained}/${gameState.player.expToNextLevel}`;
+                
                 gameState.player.gainExp(expGained);
                 gameState.isInCombat = false;
                 gameState.currentEnemy = null;
+                
+                tg.showAlert(message);
                 return;
             }
 
             // Düşman saldırısı
             const enemyDamage = gameState.currentEnemy.damage;
             gameState.player.takeDamage(enemyDamage);
-            tg.showAlert(`🗡️ Düşman size ${enemyDamage} hasar verdi!\nKalan HP: ${gameState.player.hp}/${gameState.player.maxHp}`);
+            
+            message += `\n🗡️ Düşman size ${enemyDamage} hasar verdi!\n`;
+            message += `Sizin HP: ${gameState.player.hp}/${gameState.player.maxHp}`;
+            
+            tg.showAlert(message);
         }
 
         function showInventory() {
@@ -265,6 +281,10 @@
 
         function showShop() {
             tg.showAlert('Mağaza yakında açılacak!');
+        }
+
+        function updateCombatUI() {
+            // Combat UI güncelleme fonksiyonu
         }
 
         // Oyunu başlat
