@@ -3,16 +3,11 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 tg.ready();
 
-// Three.js değişkenleri
-let scene, camera, renderer;
-let player, enemies = [];
-let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
-let velocity = new THREE.Vector3();
-let direction = new THREE.Vector3();
-let prevTime = performance.now();
-
-// Oyun durumu
-const gameState = {
+// Oyun değişkenleri
+let app = null;
+let player = null;
+let world = null;
+let gameState = {
     selectedClass: null,
     level: 1,
     hp: 100,
@@ -20,210 +15,219 @@ const gameState = {
     mp: 50,
     maxMp: 50,
     exp: 0,
-    expToNextLevel: 100,
-    inventory: []
+    expToNextLevel: 100
 };
 
-// Karakter sınıfları ve özellikleri
+// Karakter sınıfları
 const characterClasses = {
-    warrior: {
-        hp: 120,
-        mp: 30,
-        strength: 15,
-        defense: 10,
-        speed: 8
-    },
-    archer: {
-        hp: 90,
-        mp: 40,
-        strength: 12,
-        defense: 6,
-        speed: 12
-    },
-    mage: {
-        hp: 80,
-        mp: 100,
-        strength: 8,
-        defense: 4,
-        speed: 9
-    },
-    priest: {
-        hp: 90,
-        mp: 80,
-        strength: 6,
-        defense: 7,
-        speed: 8
-    },
-    assassin: {
-        hp: 85,
-        mp: 40,
-        strength: 14,
-        defense: 5,
-        speed: 14
-    },
-    beastmaster: {
-        hp: 100,
-        mp: 60,
-        strength: 10,
-        defense: 8,
-        speed: 10
-    }
+    warrior: { hp: 120, mp: 30 },
+    archer: { hp: 90, mp: 40 },
+    mage: { hp: 80, mp: 100 },
+    priest: { hp: 90, mp: 80 },
+    assassin: { hp: 85, mp: 40 },
+    beastmaster: { hp: 100, mp: 60 }
 };
 
-// Karakter seçimi
-document.querySelectorAll('.character-option').forEach(option => {
-    option.addEventListener('click', () => {
-        const characterClass = option.dataset.class;
-        selectCharacter(characterClass);
+// Sayfa yüklendiğinde
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Sayfa yüklendi');
+    
+    // Karakter seçim butonlarını ayarla
+    const buttons = document.querySelectorAll('.character-option');
+    console.log('Bulunan karakter butonları:', buttons.length);
+    
+    buttons.forEach(button => {
+        button.style.cursor = 'pointer';
+        
+        // Click event listener
+        button.addEventListener('click', function(e) {
+            console.log('Karakter tıklandı:', this.dataset.class);
+            selectCharacter(this.dataset.class);
+        });
+        
+        // Touch event listener (mobil için)
+        button.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            console.log('Karaktere dokunuldu:', this.dataset.class);
+            selectCharacter(this.dataset.class);
+        });
     });
 });
 
 function selectCharacter(characterClass) {
-    gameState.selectedClass = characterClass;
-    const stats = characterClasses[characterClass];
-    gameState.maxHp = stats.hp;
-    gameState.hp = stats.hp;
-    gameState.maxMp = stats.mp;
-    gameState.mp = stats.mp;
+    console.log('selectCharacter çağrıldı:', characterClass);
     
-    document.getElementById('character-select').style.display = 'none';
-    document.getElementById('game-screen').style.display = 'block';
+    // Karakter özelliklerini ayarla
+    gameState = {
+        ...gameState,
+        selectedClass: characterClass,
+        ...characterClasses[characterClass]
+    };
     
-    initGame();
+    // Ekranları değiştir
+    const characterSelect = document.getElementById('character-select');
+    const gameScreen = document.getElementById('game-screen');
+    
+    if (characterSelect && gameScreen) {
+        console.log('Ekranlar değiştiriliyor');
+        characterSelect.style.display = 'none';
+        gameScreen.style.display = 'block';
+        
+        // Oyunu başlat
+        startGame();
+    } else {
+        console.error('Ekran elementleri bulunamadı!');
+        console.log('characterSelect:', characterSelect);
+        console.log('gameScreen:', gameScreen);
+    }
 }
 
-// Oyun başlatma
-function initGame() {
-    initThreeJS();
-    createWorld();
-    initControls();
-    animate();
-    updateHUD();
-}
-
-function initThreeJS() {
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+function startGame() {
+    console.log('Oyun başlatılıyor');
     
-    renderer = new THREE.WebGLRenderer({
-        canvas: document.getElementById('game-canvas'),
-        antialias: true
-    });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0x000000);
-    
-    // Işıklandırma
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    scene.add(ambientLight);
-    
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(0, 20, 10);
-    scene.add(directionalLight);
+    try {
+        // PIXI uygulamasını oluştur
+        app = new PIXI.Application({
+            width: window.innerWidth,
+            height: window.innerHeight,
+            backgroundColor: 0x1099bb,
+            antialias: true,
+            resolution: window.devicePixelRatio || 1
+        });
+        
+        console.log('PIXI uygulaması oluşturuldu');
+        
+        // Canvas'ı ekle
+        const gameScreen = document.getElementById('game-screen');
+        gameScreen.appendChild(app.view);
+        console.log('Canvas eklendi');
+        
+        // Oyun dünyasını oluştur
+        createWorld();
+        setupControls();
+        
+        // Animasyon döngüsünü başlat
+        app.ticker.add(gameLoop);
+        
+        console.log('Oyun başlatıldı');
+    } catch (error) {
+        console.error('Oyun başlatılırken hata:', error);
+    }
 }
 
 function createWorld() {
+    // Dünya container'ı
+    world = new PIXI.Container();
+    app.stage.addChild(world);
+    
     // Zemin
-    const groundGeometry = new THREE.PlaneGeometry(100, 100);
-    const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x404040 });
-    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-    ground.rotation.x = -Math.PI / 2;
-    scene.add(ground);
+    const ground = new PIXI.Graphics();
+    ground.beginFill(0x408040);
+    ground.drawRect(-2000, -2000, 4000, 4000);
+    ground.endFill();
+    world.addChild(ground);
     
     // Oyuncu
-    const playerGeometry = new THREE.BoxGeometry(1, 2, 1);
-    const playerMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
-    player = new THREE.Mesh(playerGeometry, playerMaterial);
-    player.position.y = 1;
-    scene.add(player);
+    player = new PIXI.Graphics();
+    player.beginFill(0xFFFF00);
+    player.drawRect(-32, -32, 64, 64);
+    player.endFill();
+    world.addChild(player);
     
     // Kamera pozisyonu
-    camera.position.set(0, 2, 5);
-    camera.lookAt(player.position);
+    world.position.set(app.screen.width / 2, app.screen.height / 2);
 }
 
-function initControls() {
-    document.addEventListener('keydown', onKeyDown);
-    document.addEventListener('keyup', onKeyUp);
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('click', onMouseClick);
+function setupControls() {
+    // Joystick
+    const joystick = nipplejs.create({
+        zone: document.getElementById('joystick-area'),
+        mode: 'static',
+        position: { left: '50%', bottom: '100px' },
+        color: 'white',
+        size: 120
+    });
+    
+    joystick.on('move', (evt, data) => {
+        if (!player) return;
+        
+        const speed = 5;
+        const angle = data.angle.radian;
+        const force = Math.min(data.force, 1);
+        
+        player.x += Math.cos(angle) * speed * force;
+        player.y += Math.sin(angle) * speed * force;
+        player.rotation = angle;
+    });
+    
+    // Skill butonları
+    const buttons = ['attack', 'skill1', 'skill2', 'skill3'];
+    buttons.forEach(id => {
+        const button = document.getElementById(id);
+        if (button) {
+            button.onclick = () => useSkill(id);
+        }
+    });
 }
 
-function onKeyDown(event) {
-    switch(event.code) {
-        case 'KeyW': moveForward = true; break;
-        case 'KeyS': moveBackward = true; break;
-        case 'KeyA': moveLeft = true; break;
-        case 'KeyD': moveRight = true; break;
-    }
+function useSkill(skillId) {
+    if (!player || !world) return;
+    
+    const effect = new PIXI.Graphics();
+    effect.lineStyle(2, 0xFFFFFF);
+    effect.beginFill(0xFFFF00, 0.5);
+    effect.drawCircle(0, 0, 32);
+    effect.endFill();
+    effect.position.copyFrom(player.position);
+    world.addChild(effect);
+    
+    gsap.to(effect.scale, {
+        x: 3,
+        y: 3,
+        duration: 0.5,
+        ease: "power2.out",
+        onComplete: () => world.removeChild(effect)
+    });
 }
 
-function onKeyUp(event) {
-    switch(event.code) {
-        case 'KeyW': moveForward = false; break;
-        case 'KeyS': moveBackward = false; break;
-        case 'KeyA': moveLeft = false; break;
-        case 'KeyD': moveRight = false; break;
-    }
-}
-
-function onMouseMove(event) {
-    if (document.pointerLockElement === document.body) {
-        const movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
-        player.rotation.y -= movementX * 0.002;
-        camera.position.x = player.position.x + Math.sin(player.rotation.y) * 5;
-        camera.position.z = player.position.z + Math.cos(player.rotation.y) * 5;
-        camera.lookAt(player.position);
-    }
-}
-
-function onMouseClick() {
-    if (document.pointerLockElement !== document.body) {
-        document.body.requestPointerLock();
-    }
-}
-
-function animate() {
-    requestAnimationFrame(animate);
+function gameLoop(delta) {
+    if (!player || !world) return;
     
-    const time = performance.now();
-    const delta = (time - prevTime) / 1000;
+    // Kamera takibi
+    const targetX = app.screen.width / 2 - player.x;
+    const targetY = app.screen.height / 2 - player.y;
     
-    velocity.x = 0;
-    velocity.z = 0;
+    world.position.x += (targetX - world.position.x) * 0.1;
+    world.position.y += (targetY - world.position.y) * 0.1;
     
-    direction.z = Number(moveForward) - Number(moveBackward);
-    direction.x = Number(moveRight) - Number(moveLeft);
-    direction.normalize();
-    
-    const speed = 5;
-    if (moveForward || moveBackward) velocity.z -= direction.z * speed * delta;
-    if (moveLeft || moveRight) velocity.x -= direction.x * speed * delta;
-    
-    player.position.x += velocity.x;
-    player.position.z += velocity.z;
-    
-    camera.position.x = player.position.x + Math.sin(player.rotation.y) * 5;
-    camera.position.z = player.position.z + Math.cos(player.rotation.y) * 5;
-    camera.lookAt(player.position);
-    
-    renderer.render(scene, camera);
-    prevTime = time;
+    // HUD güncelle
+    updateHUD();
 }
 
 function updateHUD() {
-    document.getElementById('level').textContent = gameState.level;
-    document.getElementById('hp').textContent = `${gameState.hp}/${gameState.maxHp}`;
-    document.getElementById('mp').textContent = `${gameState.mp}/${gameState.maxMp}`;
-    document.getElementById('exp').textContent = `${gameState.exp}/${gameState.expToNextLevel}`;
+    const elements = {
+        level: document.getElementById('level'),
+        hp: document.getElementById('hp'),
+        mp: document.getElementById('mp'),
+        exp: document.getElementById('exp'),
+        hpBar: document.getElementById('hp-bar'),
+        mpBar: document.getElementById('mp-bar'),
+        expBar: document.getElementById('exp-bar')
+    };
     
-    document.getElementById('hp-bar').style.width = `${(gameState.hp / gameState.maxHp) * 100}%`;
-    document.getElementById('mp-bar').style.width = `${(gameState.mp / gameState.maxMp) * 100}%`;
-    document.getElementById('exp-bar').style.width = `${(gameState.exp / gameState.expToNextLevel) * 100}%`;
+    if (elements.level) elements.level.textContent = gameState.level;
+    if (elements.hp) elements.hp.textContent = `${gameState.hp}/${gameState.maxHp}`;
+    if (elements.mp) elements.mp.textContent = `${gameState.mp}/${gameState.maxMp}`;
+    if (elements.exp) elements.exp.textContent = `${gameState.exp}/${gameState.expToNextLevel}`;
+    
+    if (elements.hpBar) elements.hpBar.style.width = `${(gameState.hp / gameState.maxHp) * 100}%`;
+    if (elements.mpBar) elements.mpBar.style.width = `${(gameState.mp / gameState.maxMp) * 100}%`;
+    if (elements.expBar) elements.expBar.style.width = `${(gameState.exp / gameState.expToNextLevel) * 100}%`;
 }
 
 // Pencere boyutu değiştiğinde
 window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    if (app) {
+        app.renderer.resize(window.innerWidth, window.innerHeight);
+    }
 });
