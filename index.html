@@ -3,273 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WYD Style MMORPG</title>
+    <title>Telegram MMORPG</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        :root {
-            --primary-color: #4CAF50;
-            --secondary-color: #2196F3;
-            --background-color: #1a1a1a;
-            --text-color: #ffffff;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        .status-container {
-            background-color: #2a2a2a;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            width: 90%;
-            max-width: 400px;
-        }
-
-        .health-bar {
-            width: 100%;
-            height: 20px;
-            background-color: #333;
-            border-radius: 10px;
-            overflow: hidden;
-            margin: 5px 0;
-        }
-
-        .health-fill {
-            height: 100%;
-            background-color: #00ff00;
-            transition: width 0.3s ease;
-        }
-
-        .enemy-health-fill {
-            background-color: #ff3333;
-        }
-
-        .enemy-container {
-            display: none;
-            background-color: #2a2a2a;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            width: 90%;
-            max-width: 400px;
-        }
-
-        #controls {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-            width: 90%;
-            max-width: 400px;
-        }
-
-        button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            flex: 1;
-            min-width: 100px;
-            color: white;
-        }
-
-        #attack { background-color: #4CAF50; }
-        #inventory { background-color: #2196F3; }
-        #shop { background-color: #4CAF50; }
-
-        button:hover {
-            opacity: 0.9;
-        }
-    </style>
+    <link rel="stylesheet" href="game/style.css">
 </head>
 <body>
     <div id="game-container">
-        <div class="status-container">
-            <div>Player</div>
-            <div class="health-bar">
-                <div id="player-health-fill" class="health-fill" style="width: 100%"></div>
+        <!-- Karakter Seçim Ekranı -->
+        <div id="character-select" class="screen">
+            <h2>Karakter Seçimi</h2>
+            <div class="character-grid">
+                <div class="character-option" data-class="warrior">
+                    <img src="game/assets/warrior.png" alt="Warrior">
+                    <h3>Warrior</h3>
+                </div>
+                <div class="character-option" data-class="archer">
+                    <img src="game/assets/archer.png" alt="Archer">
+                    <h3>Archer</h3>
+                </div>
+                <div class="character-option" data-class="mage">
+                    <img src="game/assets/mage.png" alt="Mage">
+                    <h3>Mage</h3>
+                </div>
+                <div class="character-option" data-class="priest">
+                    <img src="game/assets/priest.png" alt="Priest">
+                    <h3>Priest</h3>
+                </div>
+                <div class="character-option" data-class="assassin">
+                    <img src="game/assets/assassin.png" alt="Assassin">
+                    <h3>Assassin</h3>
+                </div>
+                <div class="character-option" data-class="beastmaster">
+                    <img src="game/assets/beastmaster.png" alt="Beastmaster">
+                    <h3>Beastmaster</h3>
+                </div>
             </div>
-            <div>Level: <span id="level">1</span></div>
-            <div>HP: <span id="hp">100</span>/<span id="maxhp">100</span></div>
-            <div>EXP: <span id="exp">0</span>/<span id="maxexp">100</span></div>
-            <div>Gold: <span id="gold">0</span></div>
         </div>
 
-        <div id="enemy-container" class="enemy-container">
-            <div>Düşman Level: <span id="enemy-level">1</span></div>
-            <div class="health-bar">
-                <div id="enemy-health-fill" class="health-fill enemy-health-fill" style="width: 100%"></div>
+        <!-- Oyun Ana Ekranı -->
+        <div id="game-screen" class="screen hidden">
+            <!-- Karakter Bilgileri -->
+            <div id="character-info">
+                <div id="level-info">
+                    <span id="character-level">Lvl 1</span>
+                    <span id="character-name">Player</span>
+                </div>
+                <div id="stats">
+                    <div class="stat-bar hp">
+                        <div class="stat-fill"></div>
+                        <span class="stat-text">HP: 100/100</span>
+                    </div>
+                    <div class="stat-bar mp">
+                        <div class="stat-fill"></div>
+                        <span class="stat-text">MP: 100/100</span>
+                    </div>
+                    <div class="stat-bar exp">
+                        <div class="stat-fill"></div>
+                        <span class="stat-text">EXP: 0/1000</span>
+                    </div>
+                </div>
             </div>
-            <div>HP: <span id="enemy-hp">100</span>/<span id="enemy-maxhp">100</span></div>
-        </div>
 
-        <div id="controls">
-            <button id="attack" onclick="attack()">Saldır</button>
-            <button id="inventory" onclick="showInventory()">Envanter</button>
-            <button id="shop" onclick="showShop()">Mağaza</button>
+            <!-- Harita ve Lokasyon -->
+            <div id="map-container">
+                <div id="current-location">Training Ground</div>
+                <div id="map-area"></div>
+            </div>
+
+            <!-- Envanter ve Ekipman -->
+            <div id="inventory-container">
+                <div id="equipment">
+                    <!-- Ekipman slotları -->
+                </div>
+                <div id="inventory">
+                    <!-- Envanter slotları -->
+                </div>
+            </div>
+
+            <!-- Kontrol Butonları -->
+            <div id="controls">
+                <button id="attack-btn">Saldır</button>
+                <button id="skill-btn">Yetenekler</button>
+                <button id="inventory-btn">Envanter</button>
+                <button id="map-btn">Harita</button>
+            </div>
         </div>
     </div>
-
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.ready();
-
-        class Player {
-            constructor() {
-                this.level = 1;
-                this.exp = 0;
-                this.expToNextLevel = 100;
-                this.hp = 100;
-                this.maxHp = 100;
-                this.gold = 0;
-                this.inventory = [];
-            }
-
-            gainExp(amount) {
-                console.log(`Gaining ${amount} EXP`);
-                this.exp += amount;
-                console.log(`Total EXP: ${this.exp}/${this.expToNextLevel}`);
-                
-                if (this.exp >= this.expToNextLevel) {
-                    this.levelUp();
-                }
-                this.updateUI();
-            }
-
-            levelUp() {
-                this.level++;
-                this.exp = 0;
-                this.maxHp += 20;
-                this.hp = this.maxHp;
-                this.expToNextLevel = Math.floor(this.expToNextLevel * 1.5);
-                console.log(`Level Up! New level: ${this.level}`);
-                tg.showAlert(`🎉 Tebrikler! Level ${this.level} oldunuz!\nYeni can puanınız: ${this.maxHp}\nSonraki level için gereken EXP: ${this.expToNextLevel}`);
-            }
-
-            takeDamage(amount) {
-                this.hp = Math.max(0, this.hp - amount);
-                this.updateUI();
-                if (this.hp <= 0) {
-                    tg.showAlert('Öldünüz! Oyun yeniden başlıyor...');
-                    this.hp = this.maxHp;
-                }
-            }
-
-            updateUI() {
-                document.getElementById('level').textContent = this.level;
-                document.getElementById('exp').textContent = this.exp;
-                document.getElementById('maxexp').textContent = this.expToNextLevel;
-                document.getElementById('hp').textContent = this.hp;
-                document.getElementById('maxhp').textContent = this.maxHp;
-                document.getElementById('gold').textContent = this.gold;
-
-                const healthPercent = (this.hp / this.maxHp) * 100;
-                document.getElementById('player-health-fill').style.width = `${healthPercent}%`;
-            }
-        }
-
-        class Enemy {
-            constructor(level) {
-                this.level = level;
-                this.maxHp = 30 + (level * 10);
-                this.hp = this.maxHp;
-                this.damage = 5 + (level * 2);
-                this.expReward = 20 + (level * 5);
-            }
-        }
-
-        const gameState = {
-            player: new Player(),
-            currentEnemy: null,
-            isInCombat: false
-        };
-
-        function startCombat() {
-            gameState.currentEnemy = new Enemy(gameState.player.level);
-            gameState.isInCombat = true;
-            console.log('Combat started with enemy:', gameState.currentEnemy);
-            
-            const enemyContainer = document.getElementById('enemy-container');
-            enemyContainer.style.display = 'block';
-            document.getElementById('enemy-level').textContent = gameState.currentEnemy.level;
-            document.getElementById('enemy-hp').textContent = gameState.currentEnemy.hp;
-            document.getElementById('enemy-maxhp').textContent = gameState.currentEnemy.maxHp;
-            document.getElementById('enemy-health-fill').style.width = '100%';
-
-            tg.showAlert(`⚔️ Yeni Düşman!\nSeviye: ${gameState.currentEnemy.level}\nHP: ${gameState.currentEnemy.hp}/${gameState.currentEnemy.maxHp}\nVerdiği Hasar: ${gameState.currentEnemy.damage}\nKazanılacak EXP: ${gameState.currentEnemy.expReward}`);
-        }
-
-        function updateEnemyUI() {
-            if (gameState.currentEnemy) {
-                const enemyHealthPercent = (gameState.currentEnemy.hp / gameState.currentEnemy.maxHp) * 100;
-                document.getElementById('enemy-health-fill').style.width = `${Math.max(0, enemyHealthPercent)}%`;
-                document.getElementById('enemy-hp').textContent = Math.max(0, gameState.currentEnemy.hp);
-                document.getElementById('enemy-maxhp').textContent = gameState.currentEnemy.maxHp;
-            }
-        }
-
-        function attack() {
-            if (!gameState.isInCombat || !gameState.currentEnemy) {
-                startCombat();
-                return;
-            }
-
-            const playerDamage = 10 + Math.floor(Math.random() * 5) + (gameState.player.level * 2);
-            gameState.currentEnemy.hp = Math.max(0, gameState.currentEnemy.hp - playerDamage);
-            updateEnemyUI();
-            console.log(`Player dealt ${playerDamage} damage. Enemy HP: ${gameState.currentEnemy.hp}`);
-
-            let message = `⚔️ Savaş Durumu:\n`;
-            message += `Düşmana ${playerDamage} hasar verdiniz!\n`;
-            message += `Düşmanın HP: ${gameState.currentEnemy.hp}/${gameState.currentEnemy.maxHp}\n`;
-
-            if (gameState.currentEnemy.hp <= 0) {
-                const expGained = gameState.currentEnemy.expReward;
-                console.log(`Enemy defeated! Gained ${expGained} EXP`);
-                message += `\n🎯 Düşmanı YENDİNİZ!\n`;
-                message += `💫 ${expGained} EXP kazandınız!\n`;
-                
-                gameState.player.gainExp(expGained);
-                gameState.isInCombat = false;
-                gameState.currentEnemy = null;
-                
-                document.getElementById('enemy-container').style.display = 'none';
-                
-                tg.showAlert(message);
-                return;
-            }
-
-            const enemyDamage = gameState.currentEnemy.damage;
-            gameState.player.takeDamage(enemyDamage);
-            
-            message += `\n🗡️ Düşman size ${enemyDamage} hasar verdi!\n`;
-            message += `Sizin HP: ${gameState.player.hp}/${gameState.player.maxHp}`;
-            
-            tg.showAlert(message);
-        }
-
-        function showInventory() {
-            tg.showAlert('Envanter yakında eklenecek!');
-        }
-
-        function showShop() {
-            tg.showAlert('Mağaza yakında açılacak!');
-        }
-
-        gameState.player.updateUI();
-    </script>
+    <script src="game/game.js"></script>
 </body>
 </html>
