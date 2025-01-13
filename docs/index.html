@@ -2,37 +2,101 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>WYD Style MMORPG</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="game-container">
-        <div id="character">
-            <img src="character.png" alt="Character" id="character-sprite">
-            <div id="character-info">
-                <span id="character-name">Player</span>
-                <div id="health-bar">
-                    <div id="health-fill"></div>
-                </div>
+    <!-- Karakter Seçim Ekranı -->
+    <div id="character-select" class="screen">
+        <h2>Karakter Seçimi</h2>
+        <div class="character-grid">
+            <div class="character-option" data-class="warrior">
+                <img src="assets/warrior.png" alt="Warrior">
+                <h3>Warrior</h3>
+                <p>Güçlü ve dayanıklı savaşçı</p>
             </div>
-        </div>
-        
-        <div id="game-ui">
-            <div id="stats">
-                <div>Level: <span id="level">1</span></div>
-                <div>HP: <span id="hp">100</span>/100</div>
-                <div>EXP: <span id="exp">0</span>/100</div>
+            <div class="character-option" data-class="archer">
+                <img src="assets/archer.png" alt="Archer">
+                <h3>Archer</h3>
+                <p>Uzak mesafe hasarı</p>
             </div>
-            
-            <div id="controls">
-                <button id="attack-btn">Saldır</button>
-                <button id="inventory-btn">Envanter</button>
-                <button id="shop-btn">Mağaza</button>
+            <div class="character-option" data-class="mage">
+                <img src="assets/mage.png" alt="Mage">
+                <h3>Mage</h3>
+                <p>Büyü hasarı uzmanı</p>
+            </div>
+            <div class="character-option" data-class="priest">
+                <img src="assets/priest.png" alt="Priest">
+                <h3>Priest</h3>
+                <p>İyileştirme ve destek</p>
+            </div>
+            <div class="character-option" data-class="assassin">
+                <img src="assets/assassin.png" alt="Assassin">
+                <h3>Assassin</h3>
+                <p>Hızlı ve ölümcül</p>
+            </div>
+            <div class="character-option" data-class="beastmaster">
+                <img src="assets/beastmaster.png" alt="Beastmaster">
+                <h3>Beastmaster</h3>
+                <p>Hayvan kontrolü</p>
             </div>
         </div>
     </div>
+
+    <!-- Oyun Ekranı -->
+    <div id="game-screen" class="screen" style="display: none;">
+        <!-- Stat Bar -->
+        <div class="stat-bar">
+            <div class="stat">
+                <span>Level:</span>
+                <span id="level">1</span>
+            </div>
+            <div class="stat">
+                <span>HP:</span>
+                <div class="progress-bar">
+                    <div id="hp-bar" class="progress"></div>
+                </div>
+                <span id="hp">100/100</span>
+            </div>
+            <div class="stat">
+                <span>MP:</span>
+                <div class="progress-bar">
+                    <div id="mp-bar" class="progress"></div>
+                </div>
+                <span id="mp">50/50</span>
+            </div>
+            <div class="stat">
+                <span>EXP:</span>
+                <div class="progress-bar">
+                    <div id="exp-bar" class="progress"></div>
+                </div>
+                <span id="exp">0/100</span>
+            </div>
+        </div>
+
+        <!-- Harita -->
+        <div id="map-container">
+            <div id="player"></div>
+            <div id="monsters"></div>
+        </div>
+
+        <!-- Envanter -->
+        <div id="inventory">
+            <h3>Envanter</h3>
+            <div class="inventory-grid"></div>
+        </div>
+
+        <!-- Kontrol Butonları -->
+        <div id="controls">
+            <button id="attack">Saldır</button>
+            <button id="skill">Yetenek</button>
+            <button id="potion">İksir</button>
+            <button id="menu">Menü</button>
+        </div>
+    </div>
+
     <script src="game.js"></script>
 </body>
 </html>
