@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WYD Style MMORPG</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="character">
+            <img src="character.png" alt="Character" id="character-sprite">
+            <div id="character-info">
+                <span id="character-name">Player</span>
+                <div id="health-bar">
+                    <div id="health-fill"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="game-ui">
+            <div id="stats">
+                <div>Level: <span id="level">1</span></div>
+                <div>HP: <span id="hp">100</span>/100</div>
+                <div>EXP: <span id="exp">0</span>/100</div>
+            </div>
+            
+            <div id="controls">
+                <button id="attack-btn">Saldır</button>
+                <button id="inventory-btn">Envanter</button>
+                <button id="shop-btn">Mağaza</button>
+            </div>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
