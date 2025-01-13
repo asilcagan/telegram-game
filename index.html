@@ -21,117 +21,103 @@
             color: var(--text-color);
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
         }
 
-        #game-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        #character {
-            text-align: center;
+        .status-container {
+            background-color: #2a2a2a;
+            padding: 15px;
+            border-radius: 10px;
             margin-bottom: 20px;
+            width: 90%;
+            max-width: 400px;
         }
 
-        #character-sprite {
-            width: 100px;
-            height: 100px;
-            object-fit: contain;
-        }
-
-        #character-info {
-            margin-top: 10px;
-        }
-
-        #health-bar {
-            width: 200px;
+        .health-bar {
+            width: 100%;
             height: 20px;
-            background-color: #ff0000;
-            margin: 10px auto;
+            background-color: #333;
             border-radius: 10px;
             overflow: hidden;
+            margin: 5px 0;
         }
 
-        #health-fill {
-            width: 100%;
+        .health-fill {
             height: 100%;
             background-color: #00ff00;
             transition: width 0.3s ease;
         }
 
-        #game-ui {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+        .enemy-health-fill {
+            background-color: #ff3333;
         }
 
-        #stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            background-color: rgba(0, 0, 0, 0.5);
+        .enemy-container {
+            display: none;
+            background-color: #2a2a2a;
             padding: 15px;
             border-radius: 10px;
+            margin-bottom: 20px;
+            width: 90%;
+            max-width: 400px;
         }
 
         #controls {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            display: flex;
             gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 90%;
+            max-width: 400px;
         }
 
         button {
-            background-color: var(--primary-color);
-            color: white;
+            padding: 10px 20px;
             border: none;
-            padding: 15px;
             border-radius: 5px;
-            cursor: pointer;
             font-size: 16px;
-            transition: background-color 0.3s;
-            touch-action: manipulation;
+            cursor: pointer;
+            flex: 1;
+            min-width: 100px;
+            color: white;
         }
+
+        #attack { background-color: #4CAF50; }
+        #inventory { background-color: #2196F3; }
+        #shop { background-color: #4CAF50; }
 
         button:hover {
-            background-color: #45a049;
-        }
-
-        #inventory-btn {
-            background-color: var(--secondary-color);
-        }
-
-        #inventory-btn:hover {
-            background-color: #1976D2;
+            opacity: 0.9;
         }
     </style>
 </head>
 <body>
-    <div id="game-container">
-        <div id="character">
-            <div id="character-sprite">👤</div>
-            <div id="character-info">
-                <span id="character-name">Player</span>
-                <div id="health-bar">
-                    <div id="health-fill"></div>
-                </div>
-            </div>
+    <div class="status-container">
+        <div>Player</div>
+        <div class="health-bar">
+            <div id="player-health-fill" class="health-fill" style="width: 100%"></div>
         </div>
-        
-        <div id="game-ui">
-            <div id="stats">
-                <div>Level: <span id="level">1</span></div>
-                <div>HP: <span id="hp">100</span>/100</div>
-                <div>EXP: <span id="exp">0</span>/100</div>
-                <div>Gold: <span id="gold">0</span></div>
-            </div>
-            
-            <div id="controls">
-                <button id="attack-btn">Saldır</button>
-                <button id="inventory-btn">Envanter</button>
-                <button id="shop-btn">Mağaza</button>
-            </div>
+        <div>Level: <span id="level">1</span></div>
+        <div>HP: <span id="hp">100</span>/<span id="maxhp">100</span></div>
+        <div>EXP: <span id="exp">0</span>/<span id="maxexp">100</span></div>
+        <div>Gold: <span id="gold">0</span></div>
+    </div>
+
+    <div id="enemy-container" class="enemy-container">
+        <div>Düşman Level: <span id="enemy-level">1</span></div>
+        <div class="health-bar">
+            <div id="enemy-health-fill" class="health-fill enemy-health-fill" style="width: 100%"></div>
         </div>
+        <div>HP: <span id="enemy-hp">100/100</span></div>
+    </div>
+
+    <div id="controls">
+        <button id="attack" onclick="attack()">Saldır</button>
+        <button id="inventory" onclick="showInventory()">Envanter</button>
+        <button id="shop" onclick="showShop()">Mağaza</button>
     </div>
 
     <script>
@@ -184,9 +170,15 @@
 
             updateUI() {
                 document.getElementById('level').textContent = this.level;
-                document.getElementById('exp').textContent = `${this.exp}/${this.expToNextLevel}`;
-                document.getElementById('hp').textContent = `${this.hp}/${this.maxHp}`;
+                document.getElementById('exp').textContent = this.exp;
+                document.getElementById('maxexp').textContent = this.expToNextLevel;
+                document.getElementById('hp').textContent = this.hp;
+                document.getElementById('maxhp').textContent = this.maxHp;
                 document.getElementById('gold').textContent = this.gold;
+
+                // HP bar güncelleme
+                const healthPercent = (this.hp / this.maxHp) * 100;
+                document.getElementById('player-health-fill').style.width = `${healthPercent}%`;
             }
         }
 
@@ -209,7 +201,7 @@
         };
 
         // Event listeners
-        document.getElementById('attack-btn').addEventListener('click', () => {
+        document.getElementById('attack').addEventListener('click', () => {
             if (!gameState.isInCombat) {
                 startCombat();
             } else {
@@ -217,11 +209,11 @@
             }
         });
 
-        document.getElementById('inventory-btn').addEventListener('click', () => {
+        document.getElementById('inventory').addEventListener('click', () => {
             showInventory();
         });
 
-        document.getElementById('shop-btn').addEventListener('click', () => {
+        document.getElementById('shop').addEventListener('click', () => {
             showShop();
         });
 
@@ -230,7 +222,23 @@
             gameState.currentEnemy = new Enemy(gameState.player.level);
             gameState.isInCombat = true;
             console.log('Combat started with enemy:', gameState.currentEnemy);
+            
+            // Düşman UI'ını göster ve güncelle
+            const enemyContainer = document.getElementById('enemy-container');
+            enemyContainer.style.display = 'block';
+            document.getElementById('enemy-level').textContent = gameState.currentEnemy.level;
+            document.getElementById('enemy-hp').textContent = `${gameState.currentEnemy.hp}/${gameState.currentEnemy.maxHp}`;
+            document.getElementById('enemy-health-fill').style.width = '100%';
+
             tg.showAlert(`⚔️ Yeni Düşman!\nSeviye: ${gameState.currentEnemy.level}\nHP: ${gameState.currentEnemy.hp}/${gameState.currentEnemy.maxHp}\nVerdiği Hasar: ${gameState.currentEnemy.damage}\nKazanılacak EXP: ${gameState.currentEnemy.expReward}`);
+        }
+
+        function updateEnemyUI() {
+            if (gameState.currentEnemy) {
+                const enemyHealthPercent = (gameState.currentEnemy.hp / gameState.currentEnemy.maxHp) * 100;
+                document.getElementById('enemy-health-fill').style.width = `${Math.max(0, enemyHealthPercent)}%`;
+                document.getElementById('enemy-hp').textContent = `${Math.max(0, gameState.currentEnemy.hp)}/${gameState.currentEnemy.maxHp}`;
+            }
         }
 
         function attack() {
@@ -242,6 +250,7 @@
             // Oyuncu saldırısı
             const playerDamage = 10 + Math.floor(Math.random() * 5) + (gameState.player.level * 2);
             gameState.currentEnemy.hp = Math.max(0, gameState.currentEnemy.hp - playerDamage);
+            updateEnemyUI();
             console.log(`Player dealt ${playerDamage} damage. Enemy HP: ${gameState.currentEnemy.hp}`);
 
             let message = `⚔️ Savaş Durumu:\n`;
@@ -258,6 +267,9 @@
                 gameState.player.gainExp(expGained);
                 gameState.isInCombat = false;
                 gameState.currentEnemy = null;
+                
+                // Düşman öldüğünde UI'ı gizle
+                document.getElementById('enemy-container').style.display = 'none';
                 
                 tg.showAlert(message);
                 return;
