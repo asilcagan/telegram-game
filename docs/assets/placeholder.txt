@@ -1,0 +1,9 @@
+Bu klasörde şu resimler olmalı:
+- warrior.png
+- archer.png
+- mage.png
+- priest.png
+- assassin.png
+- beastmaster.png
+
+Her resim 64x64 pixel boyutunda olmalı.
