@@ -123,6 +123,7 @@
                 <div>Level: <span id="level">1</span></div>
                 <div>HP: <span id="hp">100</span>/100</div>
                 <div>EXP: <span id="exp">0</span>/100</div>
+                <div>Gold: <span id="gold">0</span></div>
             </div>
             
             <div id="controls">
@@ -141,19 +142,21 @@
 
         // Oyuncu sınıfı
         class Player {
-            constructor(name) {
-                this.name = name;
+            constructor() {
                 this.level = 1;
-                this.hp = 100;
-                this.maxHp = 100;
                 this.exp = 0;
                 this.expToNextLevel = 100;
+                this.hp = 100;
+                this.maxHp = 100;
+                this.gold = 0;
                 this.inventory = [];
             }
 
             gainExp(amount) {
+                console.log(`Gaining ${amount} EXP`);
                 this.exp += amount;
-                console.log(`Gained ${amount} EXP. Total: ${this.exp}/${this.expToNextLevel}`);
+                console.log(`Total EXP: ${this.exp}/${this.expToNextLevel}`);
+                
                 if (this.exp >= this.expToNextLevel) {
                     this.levelUp();
                 }
@@ -166,7 +169,7 @@
                 this.maxHp += 20;
                 this.hp = this.maxHp;
                 this.expToNextLevel = Math.floor(this.expToNextLevel * 1.5);
-                console.log(`Level Up! New level: ${this.level}, Next level EXP needed: ${this.expToNextLevel}`);
+                console.log(`Level Up! New level: ${this.level}`);
                 tg.showAlert(`🎉 Tebrikler! Level ${this.level} oldunuz!\nYeni can puanınız: ${this.maxHp}\nSonraki level için gereken EXP: ${this.expToNextLevel}`);
             }
 
@@ -174,18 +177,16 @@
                 this.hp = Math.max(0, this.hp - amount);
                 this.updateUI();
                 if (this.hp <= 0) {
-                    tg.showAlert('Öldünüz! Yeniden doğuyorsunuz...');
+                    tg.showAlert('Öldünüz! Oyun yeniden başlıyor...');
                     this.hp = this.maxHp;
                 }
             }
 
             updateUI() {
                 document.getElementById('level').textContent = this.level;
-                document.getElementById('hp').textContent = this.hp;
-                document.getElementById('exp').textContent = this.exp;
-                
-                const healthPercent = (this.hp / this.maxHp) * 100;
-                document.getElementById('health-fill').style.width = `${healthPercent}%`;
+                document.getElementById('exp').textContent = `${this.exp}/${this.expToNextLevel}`;
+                document.getElementById('hp').textContent = `${this.hp}/${this.maxHp}`;
+                document.getElementById('gold').textContent = this.gold;
             }
         }
 
@@ -193,16 +194,16 @@
         class Enemy {
             constructor(level) {
                 this.level = level;
-                this.maxHp = 50 + (level * 20);  // Her level için 20 HP bonus
+                this.maxHp = 30 + (level * 10);  
                 this.hp = this.maxHp;
-                this.damage = 5 + (level * 2);   // Her level için 2 hasar bonus
-                this.expReward = 20 + (level * 5); // Base 20 EXP + level başına 5 EXP
+                this.damage = 5 + (level * 2);
+                this.expReward = 20 + (level * 5);
             }
         }
 
         // Oyun durumu
         const gameState = {
-            player: new Player(tg.initDataUnsafe?.user?.first_name || "Player"),
+            player: new Player(),
             currentEnemy: null,
             isInCombat: false
         };
@@ -228,7 +229,7 @@
         function startCombat() {
             gameState.currentEnemy = new Enemy(gameState.player.level);
             gameState.isInCombat = true;
-            updateCombatUI();
+            console.log('Combat started with enemy:', gameState.currentEnemy);
             tg.showAlert(`⚔️ Yeni Düşman!\nSeviye: ${gameState.currentEnemy.level}\nHP: ${gameState.currentEnemy.hp}/${gameState.currentEnemy.maxHp}\nVerdiği Hasar: ${gameState.currentEnemy.damage}\nKazanılacak EXP: ${gameState.currentEnemy.expReward}`);
         }
 
@@ -240,18 +241,19 @@
 
             // Oyuncu saldırısı
             const playerDamage = 10 + Math.floor(Math.random() * 5) + (gameState.player.level * 2);
-            gameState.currentEnemy.hp -= playerDamage;
+            gameState.currentEnemy.hp = Math.max(0, gameState.currentEnemy.hp - playerDamage);
+            console.log(`Player dealt ${playerDamage} damage. Enemy HP: ${gameState.currentEnemy.hp}`);
 
             let message = `⚔️ Savaş Durumu:\n`;
             message += `Düşmana ${playerDamage} hasar verdiniz!\n`;
-            message += `Düşmanın HP: ${Math.max(0, gameState.currentEnemy.hp)}/${gameState.currentEnemy.maxHp}\n`;
-            
-            // Düşman ölürse
+            message += `Düşmanın HP: ${gameState.currentEnemy.hp}/${gameState.currentEnemy.maxHp}\n`;
+
+            // Düşman öldü mü kontrol et
             if (gameState.currentEnemy.hp <= 0) {
                 const expGained = gameState.currentEnemy.expReward;
+                console.log(`Enemy defeated! Gained ${expGained} EXP`);
                 message += `\n🎯 Düşmanı YENDİNİZ!\n`;
                 message += `💫 ${expGained} EXP kazandınız!\n`;
-                message += `Toplam EXP: ${gameState.player.exp + expGained}/${gameState.player.expToNextLevel}`;
                 
                 gameState.player.gainExp(expGained);
                 gameState.isInCombat = false;
@@ -261,7 +263,7 @@
                 return;
             }
 
-            // Düşman saldırısı
+            // Düşman hayattaysa saldırır
             const enemyDamage = gameState.currentEnemy.damage;
             gameState.player.takeDamage(enemyDamage);
             
@@ -281,10 +283,6 @@
 
         function showShop() {
             tg.showAlert('Mağaza yakında açılacak!');
-        }
-
-        function updateCombatUI() {
-            // Combat UI güncelleme fonksiyonu
         }
 
         // Oyunu başlat
